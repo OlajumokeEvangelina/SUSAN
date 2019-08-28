@@ -1,0 +1,143 @@
+---
+title:  "The eR-Biostat initiative : Using R markdown to develop E-learning capacity"
+author:
+- name: Olajumoke Evangelina Owokotomo
+  affiliation: Hasselt University, Belgium
+subtitle:  Logistic regression modeling using R at the SUSAN-SSACAB 2019 Conference,  Cape Town, South Africa
+#institute: UHasselt
+date: September 8 - 11, 2019
+output:
+  rmdformats::readthedown:
+    highlight: kate
+    use_bookdown: TRUE
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+categories: ["R"]
+bibliography: bibliography.bib
+---
+
+
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+```{r style, echo=FALSE, message=FALSE, warning=FALSE, results="asis"}
+suppressPackageStartupMessages({
+  library(BiocStyle)
+  library(knitr)
+  library(rmarkdown)
+  library(bookdown)
+})
+options(width = 100)
+opts_chunk$set(fig.width = 5, fig.height = 5)
+
+```
+
+# The GLM Course {-}
+## An example from the GLM course {-}
+The Aspirin Use and Myocardial Infarction dataset includes the results of a study on the relationship between aspirin use and heart attacks by the Physicians’ Health Study
+Research Group at Harvard Medical School [@ag]. The Physicians’ Health Study was a 5-year randomized study of whether regular aspirin intake reduces
+mortality from cardiovascular disease. Every other day, physicians participating
+in the study took either one aspirin tablet or a placebo. The study was
+blinded-those in the study did not know whether they were taking aspirin or a
+placebo. Of the 11034 physicians taking placebo, 189 suffered heart attacks, a proportion of $189/11034=0.0171$. Of the 11037 taking aspirin, 104 had heart attacks, a proportion of
+$0.0094$. The R code below is used to construct the data. 
+
+```{r,, eval = FALSE}
+resp<-as.factor(c(rep(0,189),rep(1,10845),rep(0,104),rep(1 ,10933)))
+trt<-as.factor(c(rep(1,189),rep(1,10845),rep(2,104),rep(2,10933)))
+cbind(resp,trt)
+Aspirin.1<-table(trt,resp)
+Aspirin.1
+row.names(Aspirin.1)=c("Placebo","Aspirin")
+```
+
+A barplot of the data can be produced using the `barplot()` function
+
+```{r, eval = FALSE}
+barplot(c(c(189,10845)/(189+10845),c(104,10933)/(104+10933))
+,col=c(1,2,1,2)
+,names=c("Yes","No","Yes","No"))
+```
+
+```{r, eval = TRUE, echo=FALSE}
+barplot(c(c(189,10845)/(189+10845),c(104,10933)/(104+10933))
+,col=c(1,2,1,2)
+,names=c("Yes","No","Yes","No"))
+```
+
+# Model formulation {-}
+
+Let $Y_{i}$ be the response variable, 
+\[
+Y_{i}=\left \{
+\begin{array}{ll}
+1, & \mbox{Myocardial Infarction}, \\
+0, & \mbox{Healty}. 
+\end{array}
+\right .
+\]
+
+Our main interest it to model the probability
+\[
+P(Y_{i}=1)=\pi_{i},
+\]
+
+with linear predictor given by $\beta_{0}+\beta_{1}$Treatment$_{i}$.
+
+The parameter $\beta_{1}$ is the log(odds ratio), that is $OR=\exp(\beta_{1})$.
+
+
+The model can be estimated in R using the `glm()` function for the analysis we use the zero/one version of the data which creates two vectors of the data, that is
+
+```{r, eval = FALSE}
+resp<-as.factor(c(rep(1,189),rep(0,10845),rep(1,104),rep(0 ,10933)))
+trt<-as.factor(c(rep(1,189),rep(1,10845),rep(2,104),rep(2,10933)))
+```
+
+```{r, eval = TRUE, echo=FALSE}
+resp<-as.factor(c(rep(1,189),rep(0,10845),rep(1,104),rep(0 ,10933)))
+trt<-as.factor(c(rep(1,189),rep(1,10845),rep(2,104),rep(2,10933)))
+table(trt,resp)
+```
+
+Using the two vectors, `resp` and `trt` the model is fitted using the following code:  
+
+```{r, eval = FALSE}
+fit.myoc<-glm(resp~relevel(trt,2),family=binomial(link="logit"))
+```
+
+We model the probability of success `P(Z=1)`. This is the probability to have cardiovascular disease. We want to see if Aspirin intake has an effect on the probability to have Myocardial infarction.
+
+The output is given below.
+```{r, eval = TRUE, echo=FALSE}
+resp<-as.factor(c(rep(0,189),rep(1,10845),rep(0,104),rep(1 ,10933)))
+trt<-as.factor(c(rep(1,189),rep(1,10845),rep(2,104),rep(2,10933)))
+fit<-glm(resp~relevel(trt,2),family=binomial(link="logit"))
+summary(fit)
+```
+
+The parameter estimate for $\beta_{1}$ is equal to `0.605`
+
+
+```{r, eval = TRUE, echo=FALSE}
+fit$coeff
+```
+
+and the odds ratio is equal to 1.83, indication that taking one Aspirin tablet per day reduce the risk for Myocardial Infarction.
+
+```{r, eval = TRUE, echo=FALSE}
+OR<-exp(fit$coeff[2])
+OR
+```
+
+# Session information {-}
+
+```{r}
+sessionInfo()
+```
+
+# References
